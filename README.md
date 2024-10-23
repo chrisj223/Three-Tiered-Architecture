@@ -6,7 +6,7 @@ Resources used
 - Amazon Linux 2
 - HAProxy Load Balances
 - MySQL
-- SeedDMS
+- SeedDMS 5.1
 
 
 # Setting up EC2 Instance
@@ -117,15 +117,51 @@ This is shows the steps of setting up the webserver. This step would be repeated
 
 - Fill in the fields with the database settings we created earlier
 - For the section "Extra PHP" include the path `/var/www/html/pear`
+- Once completed, click "Apply"; upon the second page it directs you too, choose the first option
+- Back to the terminal of the webserver, navigate to the apache conf file by running `cd /etc/httpd/conf`
 
+![image](https://github.com/user-attachments/assets/e217eeb6-9381-41f8-8b3e-dcae14bfb281)
+
+- Now edit the httpd.conf file with and text editing command, we used nano
+- Within the httpd.conf file, fine "Document Root" and then alter the path to `/var/www/html/seeddms`
+
+![image](https://github.com/user-attachments/assets/1138025d-fd53-47b9-8acd-6a384be1d094)
+
+- Remind to repeat these steps for the other 2 webservers
 
   
 # Setting up HAProxy Load Balancer
+In this step we will setup one of the Instances to function as the load balancer and the incorporate SSL traffic for encryption. This was done with an Ubuntu OS.
+
+- First, we will install HAProxy package by running `apt-get install --no-install-recommends software-properties-common` then run the command `add-apt-repository ppa:vbernat/haproxy-2.6`
+- Lastly, we will now install HAProxy by running `apt-get install haproxy=2.6.\*` then to verify the installation run `haproxy -version`
+
+![image](https://github.com/user-attachments/assets/e61d2b1d-5732-4bae-8b7b-55ec80a0462f)
 
 
 
-# Setting up SSL Certificate
+### Setting up SSL Certificate
+- Still within the HAProxy, we set up our SSL certificate with 2048 bit length. _Ensure you have openssl installed_
+- First command we'll run is `sudo mkdir /etc/ssl/xip.io` this will be the directory of the certificate location
+- We will now generate key by running this command `sudo openssl genrsa -out /etc/ssl/xip.io/xip.io.key 2048` then to generate the certificate signing reuqest run `sudo openssl req -new -key /etc/ssl/xip.io/xip.io.key \ -out /etc/ssl/xip.io/xip.io.csr` Fill in the information with what it prompts you with and give it a password
+- Now we will sign the certificate and setting expiration parameters by running the command `sudo openssl x509 -req -days 365 -in /etc/ssl/xip.io/xip.io.csr \ -signkey /etc/ssl/xip.io/xip.io.key \ -out /etc/ssl/xip.io/xip.io.crt`
+- Now we generate the .PEM format file to store everything the together by running the command `sudo cat /etc/ssl/xip.io/xip.io.crt /etc/ssl/xip.io/xip.io.key \ | sudo tee /etc/ssl/xip.io/xip.io.pem`
+- Now that you have generated the certificate you need to bind it within the haproxy.cfg. We will also add the failover safe by adding the roundrobin. Navigate to `/etc/haproxy/haproxy.cfg` and use a desired text editor to edit the file
+- Once your in the file, locate the "Frontend level" and "Backend level". To bind the ssl certiifcate, underneath "Frontend level" input next to "bind" `*:443 ssl crt /etc/ssl/[your .PEM file path]`
+- Now to ensure fault tolerance, underneath the "Backend level" configure balance ensuring `roundrobin` is in place. Then underneath you'll add the servers that it'll route to format like `sever <sever namer> <IP Address>:80 check` or similar to below. Then save the file.
+
+![image](https://github.com/user-attachments/assets/c208832f-a09e-49c6-82b6-0d38b5d4d605)
+
+- Now verify, by accessing the HAProxy server through the broswer, by checking the certificate and swap between servers each refresh
+
+![image](https://github.com/user-attachments/assets/b972ade2-d8a3-49b4-a6a3-901764e3d5a1)
 
 
+### Setting up Cookies
+This last step is short but helps add persistence to have the session stay remembered.
 
-# Setting up Cookies
+- Within the HAProxy navigate back to the haproxy.cfg file. Naviagte to "backend level" and insert the line `cookie SERVERID indirect nocache` underneath balance similar to below
+
+![image](https://github.com/user-attachments/assets/23678de6-744f-4d24-a5b8-122e8f01e5f1)
+
+- Once you save the file then you can go back to your server to verify
