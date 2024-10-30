@@ -54,7 +54,7 @@ This step is to elaborate on how to connect to your instance via SSH client.
 This step is to setup your database server. Ensure you connect to the instance that you want as your database.
 
 - Connect to your instance you designated as your database server
-- Once connected, installed MAriaDB by running the following command `sudo yum install mariadb maria-dbserver -y`
+- Once connected, installed MariaDB by running the following command `sudo yum install mariadb maria-dbserver -y`
 - Now enable MariaDB to start on reboot by running the command `sudo systemctl enable mariadb` 
 - Once all the above steps are completed, log into your database using the command `mysql -u root`
 
