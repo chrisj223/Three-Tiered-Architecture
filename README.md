@@ -5,7 +5,7 @@ Resources used
 - Amazon Web Services (AWS)
 - Amazon Linux 2
 - HAProxy Load Balances
-- MySQL
+- MySQL/MariaDB
 - SeedDMS 5.1
 
 
